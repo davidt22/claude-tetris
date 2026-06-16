@@ -4,16 +4,27 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
 
-const COLORS = [
-  null,
-  '#4dd0e1', // I - cyan
-  '#ffd54f', // O - yellow
-  '#ba68c8', // T - purple
-  '#81c784', // S - green
-  '#e57373', // Z - red
-  '#7986cb', // J - indigo
-  '#ffb74d', // L - orange
-];
+const SKIN_COLORS = {
+  retro:  [null, '#4dd0e1', '#ffd54f', '#ba68c8', '#81c784', '#e57373', '#7986cb', '#ffb74d'],
+  neon:   [null, '#00fff5', '#ffee00', '#dd00ff', '#00ff66', '#ff0033', '#4466ff', '#ff8800'],
+  pastel: [null, '#a8d8ea', '#ffeaa7', '#d7aefb', '#b5ead7', '#ffb7b2', '#b5c7f0', '#ffd8b1'],
+  pixel:  [null, '#4dd0e1', '#ffd54f', '#ba68c8', '#81c784', '#e57373', '#7986cb', '#ffb74d'],
+};
+
+let currentSkin = localStorage.getItem('tetris-skin') || 'retro';
+
+function setSkin(name) {
+  currentSkin = name;
+  localStorage.setItem('tetris-skin', name);
+  document.body.className = document.body.className
+    .replace(/skin-\w+/g, '')
+    .trim();
+  document.body.classList.add('skin-' + name);
+}
+
+function getColor(index) {
+  return (SKIN_COLORS[currentSkin] || SKIN_COLORS.retro)[index];
+}
 
 const PIECES = [
   null,
@@ -163,13 +174,37 @@ function updateHUD() {
 
 function drawBlock(context, x, y, colorIndex, size, alpha) {
   if (!colorIndex) return;
-  const color = COLORS[colorIndex];
+  const color = getColor(colorIndex);
   context.globalAlpha = alpha ?? 1;
-  context.fillStyle = color;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-  // highlight
-  context.fillStyle = 'rgba(255,255,255,0.12)';
-  context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
+
+  if (currentSkin === 'neon') {
+    // shadowBlur is managed by draw()/drawNext() to avoid per-block state writes
+    context.shadowColor = color;
+    context.fillStyle = color;
+    context.fillRect(x * size + 2, y * size + 2, size - 4, size - 4);
+  } else if (currentSkin === 'pastel') {
+    context.fillStyle = color;
+    context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
+    context.fillStyle = 'rgba(255,255,255,0.25)';
+    context.fillRect(x * size + 1, y * size + 1, size - 2, 2);
+  } else if (currentSkin === 'pixel') {
+    const half = Math.floor(size / 2);
+    context.fillStyle = color;
+    context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
+    // top-left sub-square: brighter
+    context.fillStyle = 'rgba(255,255,255,0.20)';
+    context.fillRect(x * size + 1, y * size + 1, half - 1, half - 1);
+    // bottom-right sub-square: darker
+    context.fillStyle = 'rgba(0,0,0,0.25)';
+    context.fillRect(x * size + half + 1, y * size + half + 1, half - 2, half - 2);
+  } else {
+    // retro (default)
+    context.fillStyle = color;
+    context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
+    context.fillStyle = 'rgba(255,255,255,0.12)';
+    context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
+  }
+
   context.globalAlpha = 1;
 }
 
@@ -194,22 +229,26 @@ function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawGrid();
 
-  // board
+  // board — neon: enable glow once for all solid blocks
+  if (currentSkin === 'neon') ctx.shadowBlur = 12;
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++)
       drawBlock(ctx, c, r, board[r][c], BLOCK);
 
-  // ghost
+  // ghost — no glow so it stays subtle
+  if (currentSkin === 'neon') ctx.shadowBlur = 0;
   const gy = ghostY();
   for (let r = 0; r < current.shape.length; r++)
     for (let c = 0; c < current.shape[r].length; c++)
       if (current.shape[r][c])
         drawBlock(ctx, current.x + c, gy + r, current.shape[r][c], BLOCK, 0.2);
 
-  // current piece
+  // current piece — glow on
+  if (currentSkin === 'neon') ctx.shadowBlur = 12;
   for (let r = 0; r < current.shape.length; r++)
     for (let c = 0; c < current.shape[r].length; c++)
       drawBlock(ctx, current.x + c, current.y + r, current.shape[r][c], BLOCK);
+  if (currentSkin === 'neon') ctx.shadowBlur = 0;
 }
 
 function drawNext() {
@@ -218,9 +257,11 @@ function drawNext() {
   const shape = next.shape;
   const offX = Math.floor((4 - shape[0].length) / 2);
   const offY = Math.floor((4 - shape.length) / 2);
+  if (currentSkin === 'neon') nextCtx.shadowBlur = 12;
   for (let r = 0; r < shape.length; r++)
     for (let c = 0; c < shape[r].length; c++)
       drawBlock(nextCtx, offX + c, offY + r, shape[r][c], NB);
+  if (currentSkin === 'neon') nextCtx.shadowBlur = 0;
 }
 
 function endGame() {
@@ -305,5 +346,12 @@ document.addEventListener('keydown', e => {
 });
 
 restartBtn.addEventListener('click', init);
+
+document.getElementById('skin-selector').addEventListener('change', function () {
+  setSkin(this.value);
+});
+
+setSkin(currentSkin);
+document.getElementById('skin-selector').value = currentSkin;
 
 init();
