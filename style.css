@@ -472,3 +472,43 @@ kbd {
 #save-score-btn:hover {
   background: var(--btn-hover);
 }
+
+/* ---- Skin overrides ---- */
+body.skin-neon {
+  --bg-body: #000000;
+  --canvas-bg: #050505;
+  --canvas-border: #111;
+  --grid-color: rgba(255, 255, 255, 0.05);
+}
+
+body.skin-pastel {
+  --bg-body: #f5f0ff;
+  --canvas-bg: #ede8ff;
+  --canvas-border: #c9bff0;
+  --grid-color: rgba(90, 79, 107, 0.1);
+  --text-color: #5a4f6b;
+  --label-color: #9a8fb0;
+  --value-color: #7b6fa8;
+  --title-color: #7b6fa8;
+  --title-shadow: rgba(123, 111, 168, 0.3);
+}
+
+/* ---- Skin selector ---- */
+#skin-selector {
+  background: var(--kbd-bg);
+  color: var(--text-color);
+  border: 1px solid var(--canvas-border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
+
+#skin-selector:focus {
+  outline: 1px solid var(--value-color);
+}
