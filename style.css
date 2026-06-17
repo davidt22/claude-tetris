@@ -193,21 +193,24 @@ kbd {
   align-items: center;
 }
 
-#overlay-title {
+.overlay-title {
   font-size: 28px;
   font-weight: 800;
   letter-spacing: 4px;
   color: var(--overlay-title-color);
 }
 
-#overlay-score {
+#gameover-score {
   font-family: 'Courier New', Courier, monospace;
   font-size: 14px;
   color: var(--overlay-score-color);
 }
 
-#restart-btn {
-  margin-top: 8px;
+#resume-btn,
+#restart-btn,
+#newgame-btn,
+#controls-btn {
+  margin-top: 4px;
   background: var(--btn-bg);
   color: var(--btn-color);
   border: none;
@@ -218,10 +221,64 @@ kbd {
   cursor: pointer;
   letter-spacing: 1px;
   transition: background 0.15s, color 0.3s;
+  width: 200px;
 }
 
-#restart-btn:hover {
+#resume-btn:hover,
+#restart-btn:hover,
+#newgame-btn:hover,
+#controls-btn:hover {
   background: var(--btn-hover);
+}
+
+/* Controls panel inside pause overlay */
+#controls-panel {
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+  border-radius: 6px;
+  padding: 10px 16px;
+  width: 200px;
+}
+
+#controls-panel.hidden {
+  display: none;
+}
+
+.controls-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.controls-list li {
+  font-size: 12px;
+  color: var(--controls-color);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Start level selector */
+.start-level-label {
+  font-size: 12px;
+  color: var(--controls-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+#start-level {
+  background: var(--kbd-bg);
+  color: var(--text-color);
+  border: 1px solid var(--kbd-border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s, border-color 0.3s;
 }
 
 /* ---- Theme toggle ---- */
