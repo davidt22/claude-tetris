@@ -50,6 +50,12 @@
             <li><kbd>P</kbd> pausa</li>
           </ul>
         </div>
+
+        <div class="scores-panel panel-section">
+          <span class="label">RÉCORDS</span>
+          <ol id="high-scores-list"></ol>
+          <button id="reset-scores-btn">Borrar récords</button>
+        </div>
       </aside>
     </div>
 
@@ -94,6 +100,11 @@
       <div class="overlay-box">
         <p class="overlay-title gameover-title">GAME OVER</p>
         <p id="gameover-score"></p>
+        <div id="score-entry" class="hidden">
+          <p>¡Nuevo récord! Introduce tu nombre:</p>
+          <input type="text" id="player-name" maxlength="10" placeholder="TU NOMBRE" />
+          <button id="save-score-btn">Guardar</button>
+        </div>
         <button id="newgame-btn">Nueva partida</button>
       </div>
     </div>

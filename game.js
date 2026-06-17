@@ -52,6 +52,7 @@ themeToggleInput.addEventListener('change', () => {
 
 let startLevel = 1;
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
+let combo, maxCombo;
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
@@ -115,11 +116,15 @@ function clearLines() {
     }
   }
   if (cleared) {
+    combo++;
+    if (combo > maxCombo) maxCombo = combo;
     lines += cleared;
     score += (LINE_SCORES[cleared] || 0) * level;
     level = Math.max(startLevel, Math.floor(lines / 10) + 1);
     dropInterval = Math.max(100, 1000 - (level - 1) * 90);
     updateHUD();
+  } else {
+    combo = 0;
   }
 }
 
@@ -229,11 +234,89 @@ function drawNext() {
       drawBlock(nextCtx, offX + c, offY + r, shape[r][c], NB);
 }
 
+function loadScores() {
+  try {
+    return JSON.parse(localStorage.getItem('tetris-scores') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveScore(name, s, l, mc) {
+  var scores = loadScores();
+  var entry = {
+    name: name.trim() || 'AAA',
+    score: s,
+    lines: l,
+    maxCombo: mc,
+    date: new Date().toISOString().slice(0, 10)
+  };
+  scores.push(entry);
+  scores.sort(function(a, b) { return b.score - a.score; });
+  scores = scores.slice(0, 5);
+  // Find the index of the newly inserted entry (last push, so search from end)
+  var newIdx = -1;
+  for (var i = scores.length - 1; i >= 0; i--) {
+    if (scores[i] === entry) { newIdx = i; break; }
+  }
+  localStorage.setItem('tetris-scores', JSON.stringify(scores));
+  return { scores: scores, newIdx: newIdx };
+}
+
+function renderScores(highlightIdx) {
+  var list = document.getElementById('high-scores-list');
+  if (!list) return;
+  var scores = loadScores();
+  if (scores.length === 0) {
+    list.innerHTML = '<li class="no-scores">Sin récords aún</li>';
+    return;
+  }
+  list.innerHTML = scores.map(function(entry, i) {
+    var cls = (i === highlightIdx) ? ' class="new-record"' : '';
+    return '<li' + cls + '>' +
+      '<span class="hs-rank">' + (i + 1) + '.</span>' +
+      '<span class="hs-name">' + escapeHtml(entry.name) + '</span>' +
+      '<span class="hs-score">' + entry.score.toLocaleString() + '</span>' +
+      '<span class="hs-detail">' + escapeHtml(String(entry.lines)) + 'L C' + escapeHtml(String(entry.maxCombo)) + '</span>' +
+      '</li>';
+  }).join('');
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function resetScores() {
+  localStorage.removeItem('tetris-scores');
+  renderScores();
+}
+
+function checkAndShowScoreEntry() {
+  var scores = loadScores();
+  var qualifies = scores.length < 5 || score >= scores[scores.length - 1].score;
+  var scoreEntry = document.getElementById('score-entry');
+  var playerNameInput = document.getElementById('player-name');
+  if (qualifies && scoreEntry) {
+    scoreEntry.classList.remove('hidden');
+    if (playerNameInput) {
+      playerNameInput.value = '';
+      playerNameInput.focus();
+    }
+  }
+}
+
 function endGame() {
   gameOver = true;
   cancelAnimationFrame(animId);
   gameoverScore.textContent = `Puntuación: ${score.toLocaleString()}`;
+  var scoreEntry = document.getElementById('score-entry');
+  if (scoreEntry) scoreEntry.classList.add('hidden');
   gameoverOverlay.classList.remove('hidden');
+  checkAndShowScoreEntry();
 }
 
 function togglePause() {
@@ -273,12 +356,15 @@ function init() {
   level = startLevel;
   paused = false;
   gameOver = false;
+  combo = 0;
+  maxCombo = 0;
   dropInterval = Math.max(100, 1000 - (startLevel - 1) * 90);
   dropAccum = 0;
   lastTime = performance.now();
   next = randomPiece();
   spawn();
   updateHUD();
+  renderScores();
   pauseOverlay.classList.add('hidden');
   gameoverOverlay.classList.add('hidden');
   controlsPanel.classList.add('hidden');
@@ -319,6 +405,19 @@ controlsBtn.addEventListener('click', () => {
 });
 startLevelSelect.addEventListener('change', function () {
   startLevel = parseInt(this.value, 10);
+});
+
+document.getElementById('save-score-btn').addEventListener('click', function() {
+  var playerNameInput = document.getElementById('player-name');
+  var name = playerNameInput ? playerNameInput.value : '';
+  var result = saveScore(name, score, lines, maxCombo);
+  renderScores(result.newIdx);
+  var scoreEntry = document.getElementById('score-entry');
+  if (scoreEntry) scoreEntry.classList.add('hidden');
+});
+
+document.getElementById('reset-scores-btn').addEventListener('click', function() {
+  resetScores();
 });
 
 init();
